@@ -29,6 +29,27 @@ const fixtureExcelUrl = import.meta.env.VITE_FIXTURE_EXCEL_URL;
 const refreshMs = Number(import.meta.env.VITE_AUTO_REFRESH_MS || 120000);
 const allowManualUpload = import.meta.env.VITE_ENABLE_MANUAL_UPLOAD === 'true';
 const emptyCategory = { rounds: [], results: [], standings: [], fixture: [], scorers: [], fairPlay: [] };
+const emptyTournamentData = {
+  meta: {
+    fileName: '',
+    loadedAt: new Date().toISOString(),
+    sheets: [],
+  },
+  rounds: [],
+  results: [],
+  standings: [],
+  fixture: [],
+  scorers: [],
+  fairPlay: [],
+  categoryOrder: ['A', 'B', 'C'],
+  categories: {
+    A: { ...emptyCategory },
+    B: { ...emptyCategory },
+    C: { ...emptyCategory },
+  },
+  sanctions: [],
+  byes: { A: [], B: [], C: [] },
+};
 const fixtureStorageKey = 'torneo_fixture_once_v1';
 
 const normalizeToken = (value) =>
@@ -99,17 +120,24 @@ const SectionTitle = ({ title, subtitle }) => (
 );
 
 export default function App() {
+  const shouldBootFromRemote = Boolean(resultsExcelUrl || fixtureExcelUrl);
+  const initialData = shouldBootFromRemote ? emptyTournamentData : sampleTournamentData;
+
   const [activeTab, setActiveTab] = useState('inicio');
-  const [data, setData] = useState(sampleTournamentData);
+  const [data, setData] = useState(initialData);
   const [fixtureData, setFixtureData] = useState(() => readStoredFixture());
-  const [selectedCategory, setSelectedCategory] = useState(sampleTournamentData.categoryOrder?.[0] || 'General');
+  const [selectedCategory, setSelectedCategory] = useState(initialData.categoryOrder?.[0] || 'General');
   const [selectedTeam, setSelectedTeam] = useState('Todos');
-  const [selectedRound, setSelectedRound] = useState(sampleTournamentData.rounds[0] || 'Fecha actual');
+  const [selectedRound, setSelectedRound] = useState(initialData.rounds[0] || 'Fecha actual');
   const [selectedFixtureRound, setSelectedFixtureRound] = useState('Todas');
   const [playerSearch, setPlayerSearch] = useState('');
   const [isDark, setIsDark] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState('Usando datos demo. Subí tu Excel para actualizar.');
+  const [message, setMessage] = useState(
+    shouldBootFromRemote
+      ? 'Cargando datos desde archivos remotos...'
+      : 'Usando datos demo. Subí tu Excel para actualizar.',
+  );
 
   const categoryThemeClass = useMemo(() => {
     if (selectedCategory === 'B') return 'theme-B';
@@ -389,8 +417,8 @@ export default function App() {
       <header className="mb-4 card fade-in sticky top-3 z-20">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="accent-text text-xs uppercase tracking-[0.22em]">Torneo en vivo</p>
-            <h1 className="text-xl font-bold text-white md:text-2xl">Panel de campeonato</h1>
+            <p className="accent-text text-xs uppercase tracking-[0.22em]">Torneo UTN Sábados</p>
+            <h1 className="text-xl font-bold text-white md:text-2xl">Apertura 2026</h1>
             <p className="mt-1 text-xs text-slate-400">
               {message} · Última actualización:{' '}
               {new Date(data.meta.loadedAt).toLocaleString('es-AR', { hour12: false })}
