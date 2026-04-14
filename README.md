@@ -113,3 +113,18 @@ En `Settings` → `Secrets and variables` → `Actions` → `Variables`, crear:
 Cada push a `main` o `master` dispara build y deploy automático.
 
 > Nota: para GitHub Pages de proyecto se usa base `/${repo}/` automáticamente con `VITE_BASE_PATH`.
+
+## 🌐 Deploy en GitLab Pages
+
+Se incluye [.gitlab-ci.yml](.gitlab-ci.yml) para publicar `dist` como Pages.
+
+Importante: `.env` está en `.gitignore`, por eso en GitLab CI no existe y la app cae en datos demo.
+
+En GitLab, configurar variables en `Settings` → `CI/CD` → `Variables`:
+
+- `VITE_RESULTS_EXCEL_URL`
+- `VITE_FIXTURE_EXCEL_URL`
+- `VITE_AUTO_REFRESH_MS` (opcional)
+- `VITE_ENABLE_MANUAL_UPLOAD` (opcional)
+
+Luego hacer push a `main` o `master` para redeploy.
