@@ -32,12 +32,17 @@ jobs:
 
       - name: Build
         env:
-          VITE_BASE_PATH: /${{ github.event.repository.name }}/
           VITE_RESULTS_EXCEL_URL: ${{ vars.VITE_RESULTS_EXCEL_URL }}
           VITE_FIXTURE_EXCEL_URL: ${{ vars.VITE_FIXTURE_EXCEL_URL }}
           VITE_AUTO_REFRESH_MS: ${{ vars.VITE_AUTO_REFRESH_MS || '120000' }}
           VITE_ENABLE_MANUAL_UPLOAD: ${{ vars.VITE_ENABLE_MANUAL_UPLOAD || 'false' }}
-        run: npm run build
+        run: |
+          if [ "${{ github.event.repository.name }}" = "${{ github.repository_owner }}.github.io" ]; then
+            export VITE_BASE_PATH="/"
+          else
+            export VITE_BASE_PATH="/${{ github.event.repository.name }}/"
+          fi
+          npm run build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
