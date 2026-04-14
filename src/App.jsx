@@ -1,27 +1,26 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Ban,
+  AlertTriangle,
+  BarChart3,
   CalendarDays,
-  Medal,
-  Moon,
+  Clock,
+  Heart,
   Shield,
-  ShieldCheck,
-  Sun,
+  Target,
   Trophy,
   Upload,
-  Users,
 } from 'lucide-react';
 import { parseTournamentWorkbook } from './lib/excelParser';
 import { sampleTournamentData } from './lib/sampleData';
 
 const tabs = [
   { id: 'inicio', label: 'Inicio', icon: Trophy },
-  { id: 'posiciones', label: 'Tabla', icon: Medal },
+  { id: 'posiciones', label: 'Tabla', icon: BarChart3 },
   { id: 'fixture', label: 'Fixture', icon: CalendarDays },
-  { id: 'proxima', label: 'Próxima', icon: CalendarDays },
-  { id: 'goleadores', label: 'Goleadores', icon: Users },
-  { id: 'fairplay', label: 'Fair Play', icon: ShieldCheck },
-  { id: 'sanciones', label: 'Sanciones', icon: Ban },
+  { id: 'proxima', label: 'Próxima', icon: Clock },
+  { id: 'goleadores', label: 'Goleadores', icon: Target },
+  { id: 'fairplay', label: 'Fair Play', icon: Heart },
+  { id: 'sanciones', label: 'Sanciones', icon: AlertTriangle },
 ];
 
 const resultsExcelUrl = import.meta.env.VITE_RESULTS_EXCEL_URL || import.meta.env.VITE_AUTO_EXCEL_URL;
@@ -99,8 +98,8 @@ const readStoredFixture = () => {
 };
 
 const TeamChip = ({ name }) => (
-  <div className="flex items-center gap-2">
-    <div className="grid h-8 w-8 place-items-center rounded-full bg-slate-800 text-xs font-bold text-cyan-300 ring-1 ring-slate-700">
+  <div className="team-chip">
+    <div className="team-avatar">
       {name
         .split(' ')
         .slice(0, 2)
@@ -108,14 +107,14 @@ const TeamChip = ({ name }) => (
         .join('')
         .toUpperCase()}
     </div>
-    <span className="text-sm font-medium text-slate-100">{name}</span>
+    <span className="team-name">{name}</span>
   </div>
 );
 
 const SectionTitle = ({ title, subtitle }) => (
-  <div className="mb-3">
-    <h2 className="text-lg font-semibold text-white">{title}</h2>
-    {subtitle ? <p className="text-xs text-slate-400">{subtitle}</p> : null}
+  <div>
+    <h2 className="section-title">{title}</h2>
+    {subtitle ? <p className="section-sub">{subtitle}</p> : null}
   </div>
 );
 
@@ -129,9 +128,8 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState(initialData.categoryOrder?.[0] || 'General');
   const [selectedTeam, setSelectedTeam] = useState('Todos');
   const [selectedRound, setSelectedRound] = useState(initialData.rounds[0] || 'Fecha actual');
-  const [selectedFixtureRound, setSelectedFixtureRound] = useState('Todas');
+  const [selectedFixtureRound, setSelectedFixtureRound] = useState('');
   const [playerSearch, setPlayerSearch] = useState('');
-  const [isDark, setIsDark] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState(
     shouldBootFromRemote
@@ -145,9 +143,6 @@ export default function App() {
     return 'theme-A';
   }, [selectedCategory]);
 
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', isDark);
-  }, [isDark]);
 
   const categoryOptions = useMemo(() => {
     const merged = new Set([...(data.categoryOrder || []), ...(fixtureData?.categoryOrder || [])]);
@@ -201,7 +196,7 @@ export default function App() {
 
   const fullFilteredFixture = useMemo(() => {
     return (fixtureCategoryData.fixture || []).filter((match) => {
-      const roundOk = selectedFixtureRound === 'Todas' || match.round === selectedFixtureRound;
+      const roundOk = selectedFixtureRound ? match.round === selectedFixtureRound : true;
       const teamOk =
         selectedTeam === 'Todos' || match.homeTeam === selectedTeam || match.awayTeam === selectedTeam;
       return roundOk && teamOk;
@@ -294,13 +289,11 @@ export default function App() {
 
   useEffect(() => {
     if (fixtureRoundOptions.length === 0) {
-      setSelectedFixtureRound('Todas');
+      setSelectedFixtureRound('');
       return;
     }
 
-    setSelectedFixtureRound((current) =>
-      current === 'Todas' || fixtureRoundOptions.includes(current) ? current : fixtureRoundOptions[0],
-    );
+    setSelectedFixtureRound((current) => (fixtureRoundOptions.includes(current) ? current : fixtureRoundOptions[0]));
   }, [fixtureRoundOptions]);
 
   const onUploadExcel = async (event) => {
@@ -408,440 +401,342 @@ export default function App() {
   }, []);
 
   return (
-    <div className={`mx-auto min-h-screen max-w-5xl px-4 pb-24 pt-4 text-slate-100 md:px-6 ${categoryThemeClass}`}>
-      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute -left-16 top-10 h-52 w-52 rounded-full bg-cyan-500/10 blur-3xl" />
-        <div className="absolute -right-16 top-24 h-52 w-52 rounded-full bg-emerald-500/10 blur-3xl" />
+    <div className={categoryThemeClass}>
+      <div className="app-shell">
+        {/* ── Sidebar (desktop) ── */}
+        <aside className="sidebar">
+          <div className="sidebar-brand">
+            <p className="accent-text text-[10px] font-semibold uppercase tracking-widest opacity-70">Torneo UTN</p>
+            <h1 className="text-lg font-bold text-white leading-tight">Apertura 2026</h1>
+          </div>
+
+          <nav className="flex flex-col gap-1 flex-1">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button key={tab.id} onClick={() => setActiveTab(tab.id)} data-active={activeTab === tab.id} className="sidebar-link">
+                  <Icon size={16} strokeWidth={2} />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </nav>
+
+          <div className="mt-auto flex flex-col gap-3 border-t border-white/[.06] pt-4">
+            <div>
+              <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block mb-1.5">Categoría</label>
+              <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="select-control w-full">
+                {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block mb-1.5">Equipo</label>
+              <select value={selectedTeam} onChange={(e) => setSelectedTeam(e.target.value)} className="select-control w-full">
+                {teams.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            {allowManualUpload && (
+              <div className="flex gap-2">
+                <label className="btn flex-1 cursor-pointer text-center text-xs">
+                  <Upload size={14} /> Res.
+                  <input type="file" accept=".xlsx,.xls" onChange={onUploadExcel} className="hidden" />
+                </label>
+                <label className={`btn flex-1 cursor-pointer text-center text-xs ${fixtureData ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <Upload size={14} /> Fix.
+                  <input type="file" accept=".xlsx,.xls" onChange={onUploadFixtureExcel} className="hidden" disabled={Boolean(fixtureData)} />
+                </label>
+              </div>
+            )}
+          </div>
+        </aside>
+
+        {/* ── Main column ── */}
+        <div className="flex flex-col min-h-dvh">
+          {/* Mobile top bar */}
+          <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-white/[.06] bg-slate-950/90 backdrop-blur-md px-4 py-3 md:hidden">
+            <div>
+              <p className="accent-text text-[9px] font-semibold uppercase tracking-widest opacity-70">Torneo UTN</p>
+              <h1 className="text-base font-bold text-white">Apertura 2026</h1>
+            </div>
+            <div className="filter-bar">
+              <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="select-control text-xs py-1.5 px-2">
+                {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <select value={selectedTeam} onChange={(e) => setSelectedTeam(e.target.value)} className="select-control text-xs py-1.5 px-2 max-w-[110px]">
+                {teams.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+          </header>
+
+          <main className="flex-1 p-4 pb-24 md:p-6 md:pb-6 space-y-5 max-w-5xl w-full mx-auto">
+            {/* ── Tab: Inicio ── */}
+        {activeTab === 'inicio' && (
+              <section className="tab-enter space-y-4">
+                <div className="section-header">
+                  <SectionTitle title="Últimos resultados" subtitle="Fecha actual e historial" />
+                  <select value={selectedRound} onChange={(event) => setSelectedRound(event.target.value)} className="select-control">
+                    {(categoryData.rounds || []).map((round) => (
+                      <option key={round} value={round}>{round}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {filteredResults.length === 0 ? (
+                  <div className="empty-state">
+                    <Shield size={40} />
+                    <p className="text-sm">No hay partidos para el filtro seleccionado.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredResults.map((match) => (
+                      <article key={match.id} className="match-card">
+                        <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
+                          <span>{match.kickoff || 'Horario a confirmar'}</span>
+                          <div className="flex items-center gap-2">
+                            <span>{match.venue || 'Cancha a confirmar'}</span>
+                            <span className="badge badge-accent">Final</span>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                          <TeamChip name={match.homeTeam} />
+                          <div className="text-center text-xl font-bold accent-text">
+                            {match.homeGoals} - {match.awayGoals}
+                          </div>
+                          <div className="justify-self-end">
+                            <TeamChip name={match.awayTeam} />
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* ── Tab: Posiciones ── */}
+        {activeTab === 'posiciones' && (
+              <section className="tab-enter space-y-4">
+                <SectionTitle title="Tabla de posiciones" subtitle="Ordenada por puntos" />
+                <div className="table-wrap">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DIF</th><th>PTS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredStandings.map((row, index) => (
+                        <tr key={row.id}>
+                          <td><span className={`rank-badge ${index < 3 ? 'rank-top' : 'rank-normal'}`}>{index + 1}</span></td>
+                          <td className="font-medium text-slate-100">{row.team}</td>
+                          <td>{row.pj}</td><td>{row.g}</td><td>{row.e}</td><td>{row.p}</td>
+                          <td>{row.gf}</td><td>{row.gc}</td>
+                          <td className={row.dif >= 0 ? 'text-emerald-400' : 'text-rose-400'}>{row.dif}</td>
+                          <td className="font-semibold accent-text">{row.pts}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            )}
+
+        {/* ── Tab: Fixture ── */}
+            {activeTab === 'fixture' && (
+              <section className="tab-enter space-y-4">
+                <div className="section-header">
+                  <SectionTitle title="Fixture del torneo" subtitle={fixtureData ? 'Calendario completo cargado' : 'Cargá el Excel de fixture una sola vez'} />
+                  {fixtureData && (
+                    <select value={selectedFixtureRound} onChange={(e) => setSelectedFixtureRound(e.target.value)} className="select-control">
+                      {fixtureRoundOptions.map((r) => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                  )}
+                </div>
+
+                {!fixtureData ? (
+                  <div className="empty-state">
+                    <CalendarDays size={40} />
+                    <p className="text-sm">Usá el botón "Cargar fixture (1 vez)" para habilitar esta pestaña.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {fixtureWithResults.map((match) => (
+                      <article key={match.id} className="match-card">
+                        <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
+                          <span className="badge badge-default">{match.round}</span>
+                          <div className="flex items-center gap-2">
+                            <span>{match.kickoff} · {match.venue}</span>
+                            {match.played ? <span className="badge badge-success">Final</span> : <span className="badge badge-default">Programado</span>}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between gap-2 text-sm">
+                          <TeamChip name={match.homeTeam} />
+                          {match.played ? (
+                            <div className="text-base font-bold accent-text">{match.homeGoals} - {match.awayGoals}</div>
+                          ) : (
+                            <Shield size={16} className="text-slate-600" />
+                          )}
+                          <TeamChip name={match.awayTeam} />
+                        </div>
+                      </article>
+                    ))}
+
+                    {(fixtureData.byes?.[selectedCategory] || [])
+                      .filter((item) => (selectedFixtureRound ? item.round === selectedFixtureRound : true))
+                      .map((item, idx) => (
+                        <article key={`fixture-bye-${idx}`} className="match-card border-l-2" style={{ borderLeftColor: 'rgb(var(--accent))' }}>
+                          <p className="text-sm text-slate-300">
+                            <span className="badge badge-accent mr-2">{item.round}</span>
+                            <span className="text-slate-500">Jornada libre:</span>{' '}
+                            <span className="font-semibold accent-text">{item.team}</span>
+                          </p>
+                        </article>
+                      ))}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* ── Tab: Próxima ── */}
+            {activeTab === 'proxima' && (
+              <section className="tab-enter space-y-4">
+                <SectionTitle title="Próxima fecha" subtitle="Fixture por horario" />
+                {filteredFixture.length === 0 ? (
+                  <div className="empty-state">
+                    <Clock size={40} />
+                    <p className="text-sm">No hay próximos partidos programados.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredFixture.map((match) => (
+                      <article key={match.id} className="match-card">
+                        <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
+                          <span className="badge badge-default">{match.round}</span>
+                          <span>{match.kickoff} · {match.venue}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2 text-sm">
+                          <TeamChip name={match.homeTeam} />
+                          <Shield size={16} className="text-slate-600" />
+                          <TeamChip name={match.awayTeam} />
+                        </div>
+                      </article>
+                    ))}
+
+                    {(data.byes?.[selectedCategory] || []).map((item, idx) => (
+                      <article key={`bye-${idx}`} className="match-card border-l-2" style={{ borderLeftColor: 'rgb(var(--accent))' }}>
+                        <p className="text-sm text-slate-300">
+                          <span className="badge badge-default mr-2">{item.round}</span>
+                          Libre: <span className="font-semibold accent-text">{item.team}</span>
+                        </p>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* ── Tab: Goleadores ── */}
+            {activeTab === 'goleadores' && (
+              <section className="tab-enter space-y-4">
+                <div className="section-header">
+                  <SectionTitle title="Tabla de goleadores" subtitle="Orden descendente" />
+                  <input value={playerSearch} onChange={(e) => setPlayerSearch(e.target.value)} placeholder="Buscar jugador…" className="input-control w-48" />
+                </div>
+                <div className="table-wrap">
+                  <table className="data-table">
+                    <thead><tr><th>#</th><th>Jugador</th><th>Equipo</th><th>Goles</th></tr></thead>
+                    <tbody>
+                      {filteredScorers.map((row, idx) => (
+                        <tr key={row.id}>
+                          <td><span className={`rank-badge ${idx < 3 ? 'rank-top' : 'rank-normal'}`}>{idx + 1}</span></td>
+                          <td className="font-medium text-slate-100">{row.player}</td>
+                          <td className="text-slate-400">{row.team}</td>
+                          <td className="font-semibold text-amber-300">{row.goals}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            )}
+
+            {/* ── Tab: Fair Play ── */}
+            {activeTab === 'fairplay' && (
+              <section className="tab-enter space-y-4">
+                <SectionTitle title="Fair Play" subtitle="De mejor a peor" />
+                <div className="table-wrap">
+                  <table className="data-table">
+                    <thead><tr><th>#</th><th>Equipo</th><th>Puntos FP</th></tr></thead>
+                    <tbody>
+                      {filteredFairPlay.map((row, idx) => (
+                        <tr key={row.id}>
+                          <td><span className={`rank-badge ${idx < 3 ? 'rank-top' : 'rank-normal'}`}>{idx + 1}</span></td>
+                          <td className="font-medium text-slate-100">{row.team}</td>
+                          <td className="font-semibold text-emerald-400">{row.points}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            )}
+
+            {/* ── Tab: Sanciones ── */}
+            {activeTab === 'sanciones' && (
+              <section className="tab-enter space-y-4">
+                <SectionTitle title="Sanciones" subtitle="Registro disciplinario" />
+                {filteredSanctions.length === 0 ? (
+                  <div className="empty-state">
+                    <AlertTriangle size={40} />
+                    <p className="text-sm">No hay sanciones registradas.</p>
+                  </div>
+                ) : (
+                  <div className="table-wrap">
+                    <table className="data-table">
+                      <thead>
+                        <tr><th>Nombre</th><th>Equipo</th><th>Div.</th><th>Expulsión</th><th>Artículo</th><th>Sanción</th><th>Hasta</th></tr>
+                      </thead>
+                      <tbody>
+                        {filteredSanctions.map((row) => (
+                          <tr key={row.id}>
+                            <td className="font-medium text-slate-100">{row.name}</td>
+                            <td className="text-slate-400">{row.team}</td>
+                            <td><span className="badge badge-default">{row.category}</span></td>
+                            <td>{row.expulsionDate}</td>
+                            <td>{row.article}</td>
+                            <td className="text-rose-400">{row.sanction}</td>
+                            <td>{row.until}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
+            )}
+          </main>
+        </div>
       </div>
 
-      <header className="mb-4 card fade-in sticky top-3 z-20">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="accent-text text-xs uppercase tracking-[0.22em]">Torneo UTN Sábados</p>
-            <h1 className="text-xl font-bold text-white md:text-2xl">Apertura 2026</h1>
-            <p className="mt-1 text-xs text-slate-400">
-              {message} · Última actualización:{' '}
-              {new Date(data.meta.loadedAt).toLocaleString('es-AR', { hour12: false })}
-            </p>
-            <p className="mt-1">
-              <span className="badge accent-border accent-text">Categoría {selectedCategory}</span>
-            </p>
-          </div>
-          <button
-            onClick={() => setIsDark((prev) => !prev)}
-            className="btn-soft p-2"
-            aria-label="Cambiar modo"
-          >
-            {isDark ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
-        </div>
-
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 md:grid-cols-[auto_1fr_auto_auto_auto]">
-          <select
-            value={selectedCategory}
-            onChange={(event) => setSelectedCategory(event.target.value)}
-            className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-white/20"
-          >
-            {categoryOptions.map((category) => (
-              <option key={category} value={category}>
-                Categoría {category}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={selectedTeam}
-            onChange={(event) => setSelectedTeam(event.target.value)}
-            className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-white/20"
-          >
-            {teams.map((team) => (
-              <option key={team} value={team}>
-                {team}
-              </option>
-            ))}
-          </select>
-
-          {allowManualUpload ? (
-            <label className="btn-soft inline-flex cursor-pointer items-center justify-center gap-2">
-              <Upload size={16} />
-              Cargar Excel
-              <input type="file" accept=".xlsx,.xls" onChange={onUploadExcel} className="hidden" />
-            </label>
-          ) : null}
-
-          {allowManualUpload ? (
-            <label
-              className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition ${
-                fixtureData
-                  ? 'cursor-not-allowed border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
-                  : 'btn-soft cursor-pointer'
-              }`}
-            >
-              <Upload size={16} />
-              {fixtureData ? 'Fixture cargado' : 'Cargar fixture (1 vez)'}
-              <input
-                type="file"
-                accept=".xlsx,.xls"
-                onChange={onUploadFixtureExcel}
-                className="hidden"
-                disabled={Boolean(fixtureData)}
-              />
-            </label>
-          ) : null}
-
-          {resultsExcelUrl ? (
-            <button
-              onClick={() =>
-                fetchResultsFromUrl(resultsExcelUrl, resultsExcelUrl.split('/').pop() || 'resultados.xlsx')
-              }
-              className="btn-soft"
-            >
-              Actualizar
-            </button>
-          ) : null}
-        </div>
-      </header>
-
-      <nav className="mb-4 hidden gap-2 rounded-2xl border border-white/10 bg-slate-900/40 p-2 backdrop-blur md:flex">
+      {/* ── Mobile Bottom Nav ── */}
+      <nav className="mobile-nav">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition ${
-                activeTab === tab.id
-                  ? 'chip-active border-cyan-500/40'
-                  : 'border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/25'
-              }`}
-            >
-              <Icon size={16} />
-              {tab.label}
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)} data-active={activeTab === tab.id} className="mobile-nav-btn">
+              <Icon size={18} strokeWidth={2} />
+              <span>{tab.label}</span>
             </button>
           );
         })}
       </nav>
 
-      <main className="space-y-4 pb-6">
-        {activeTab === 'inicio' && (
-          <section className="card tab-enter">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <SectionTitle title="Últimos resultados" subtitle="Fecha actual e historial" />
-              <select
-                value={selectedRound}
-                onChange={(event) => setSelectedRound(event.target.value)}
-                className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-xs"
-              >
-                {(categoryData.rounds || []).map((round) => (
-                  <option key={round} value={round}>
-                    {round}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-3">
-              {filteredResults.length === 0 ? (
-                <p className="text-sm text-slate-400">No hay partidos para el filtro seleccionado.</p>
-              ) : (
-                filteredResults.map((match) => {
-                  return (
-                    <article key={match.id} className="match-card">
-                      <div className="mb-2 flex items-center justify-between text-xs text-slate-400">
-                        <span>{match.kickoff || 'Horario a confirmar'}</span>
-                        <div className="flex items-center gap-2">
-                          <span>{match.venue || 'Cancha a confirmar'}</span>
-                          <span className="badge accent-border accent-text">Final</span>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                        <TeamChip name={match.homeTeam} />
-                        <div className="text-center text-xl font-bold text-slate-200">
-                          {match.homeGoals} - {match.awayGoals}
-                        </div>
-                        <div className="justify-self-end">
-                          <TeamChip name={match.awayTeam} />
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })
-              )}
-            </div>
-          </section>
-        )}
-
-        {activeTab === 'posiciones' && (
-          <section className="card tab-enter">
-            <SectionTitle title="Tabla de posiciones" subtitle="Ordenada por puntos" />
-            <div className="table-scroll">
-              <table className="table-base">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Equipo</th>
-                    <th>PJ</th>
-                    <th>G</th>
-                    <th>E</th>
-                    <th>P</th>
-                    <th>GF</th>
-                    <th>GC</th>
-                    <th>DIF</th>
-                    <th>PTS</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredStandings.map((row, index) => (
-                    <tr key={row.id} className="border-b border-slate-800/70 last:border-none">
-                      <td>
-                        <span
-                          className={`badge ${
-                            index < 3
-                              ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
-                              : 'border-slate-700 bg-slate-800 text-slate-300'
-                          }`}
-                        >
-                          {index + 1}
-                        </span>
-                      </td>
-                      <td className="font-medium text-slate-100">{row.team}</td>
-                      <td>{row.pj}</td>
-                      <td>{row.g}</td>
-                      <td>{row.e}</td>
-                      <td>{row.p}</td>
-                      <td>{row.gf}</td>
-                      <td>{row.gc}</td>
-                      <td className={row.dif >= 0 ? 'text-emerald-300' : 'text-rose-300'}>{row.dif}</td>
-                      <td className="font-semibold text-cyan-300">{row.pts}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
-
-        {activeTab === 'fixture' && (
-          <section className="card tab-enter">
-            <SectionTitle
-              title="Fixture del torneo"
-              subtitle={fixtureData ? 'Calendario completo cargado' : 'Cargá el Excel de fixture una sola vez'}
-            />
-
-            {!fixtureData ? (
-              <p className="text-sm text-slate-400">Usá el botón “Cargar fixture (1 vez)” para habilitar esta pestaña.</p>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex items-center justify-end">
-                  <select
-                    value={selectedFixtureRound}
-                    onChange={(event) => setSelectedFixtureRound(event.target.value)}
-                    className="rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-xs"
-                  >
-                    <option value="Todas">Todas las fechas</option>
-                    {fixtureRoundOptions.map((round) => (
-                      <option key={round} value={round}>
-                        {round}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {fixtureWithResults.map((match) => (
-                  <article key={match.id} className="match-card">
-                    <div className="mb-2 flex items-center justify-between text-xs text-slate-400">
-                      <span className="badge">{match.round}</span>
-                      <div className="flex items-center gap-2">
-                        <span>
-                          {match.kickoff} · {match.venue}
-                        </span>
-                        {match.played ? <span className="badge border-emerald-500/40 text-emerald-300">Final</span> : <span className="badge">Programado</span>}
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between gap-2 text-sm">
-                      <TeamChip name={match.homeTeam} />
-                      {match.played ? (
-                        <div className="text-base font-bold text-cyan-300">
-                          {match.homeGoals} - {match.awayGoals}
-                        </div>
-                      ) : (
-                        <Shield size={16} className="text-slate-500" />
-                      )}
-                      <TeamChip name={match.awayTeam} />
-                    </div>
-                  </article>
-                ))}
-
-                {(fixtureData.byes?.[selectedCategory] || [])
-                  .filter((item) => selectedFixtureRound === 'Todas' || item.round === selectedFixtureRound)
-                  .map((item, idx) => (
-                  <article key={`fixture-bye-${idx}`} className="rounded-xl border border-slate-800 bg-slate-950/50 p-3">
-                    <p className="text-sm text-slate-300">
-                      <span className="badge mr-2">{item.round}</span>
-                      Libre: <span className="font-semibold text-cyan-300">{item.team}</span>
-                    </p>
-                  </article>
-                  ))}
-              </div>
-            )}
-          </section>
-        )}
-
-        {activeTab === 'proxima' && (
-          <section className="card tab-enter">
-            <SectionTitle title="Próxima fecha" subtitle="Fixture por horario" />
-            <div className="space-y-3">
-              {filteredFixture.map((match) => (
-                <article key={match.id} className="match-card">
-                  <div className="mb-2 flex items-center justify-between text-xs text-slate-400">
-                    <span className="badge">{match.round}</span>
-                    <span>
-                      {match.kickoff} · {match.venue}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between gap-2 text-sm">
-                    <TeamChip name={match.homeTeam} />
-                    <Shield size={16} className="text-slate-500" />
-                    <TeamChip name={match.awayTeam} />
-                  </div>
-                </article>
-              ))}
-
-              {(data.byes?.[selectedCategory] || []).map((item, idx) => (
-                <article key={`bye-${idx}`} className="rounded-xl border border-slate-800 bg-slate-950/50 p-3">
-                  <p className="text-sm text-slate-300">
-                    <span className="badge mr-2">{item.round}</span>
-                    Libre: <span className="font-semibold text-cyan-300">{item.team}</span>
-                  </p>
-                </article>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {activeTab === 'goleadores' && (
-          <section className="card tab-enter">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <SectionTitle title="Tabla de goleadores" subtitle="Orden descendente" />
-              <input
-                value={playerSearch}
-                onChange={(event) => setPlayerSearch(event.target.value)}
-                placeholder="Buscar jugador"
-                className="rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm outline-none ring-cyan-500 focus:ring"
-              />
-            </div>
-            <div className="table-scroll">
-              <table className="table-base">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Jugador</th>
-                    <th>Equipo</th>
-                    <th>Goles</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredScorers.map((row, idx) => (
-                    <tr key={row.id} className="border-b border-slate-800/70 last:border-none">
-                      <td>{idx + 1}</td>
-                      <td className="font-medium text-slate-100">{row.player}</td>
-                      <td>{row.team}</td>
-                      <td className="font-semibold text-amber-300">{row.goals}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
-
-        {activeTab === 'fairplay' && (
-          <section className="card tab-enter">
-            <SectionTitle title="Fair Play" subtitle="De mejor a peor" />
-            <div className="table-scroll">
-              <table className="table-base">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Equipo</th>
-                    <th>Puntos FP</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredFairPlay.map((row, idx) => (
-                    <tr key={row.id} className="border-b border-slate-800/70 last:border-none">
-                      <td>{idx + 1}</td>
-                      <td className="font-medium text-slate-100">{row.team}</td>
-                      <td className="font-semibold text-emerald-300">{row.points}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
-
-        {activeTab === 'sanciones' && (
-          <section className="card tab-enter">
-            <SectionTitle title="Sanciones" subtitle="Registro disciplinario" />
-            <div className="table-scroll">
-              <table className="table-base">
-                <thead>
-                  <tr>
-                    <th>Nombre</th>
-                    <th>Equipo</th>
-                    <th>Div.</th>
-                    <th>Expulsión</th>
-                    <th>Artículo</th>
-                    <th>Sanción</th>
-                    <th>Hasta</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredSanctions.map((row) => (
-                    <tr key={row.id} className="border-b border-slate-800/70 last:border-none">
-                      <td className="font-medium text-slate-100">{row.name}</td>
-                      <td>{row.team}</td>
-                      <td>{row.category}</td>
-                      <td>{row.expulsionDate}</td>
-                      <td>{row.article}</td>
-                      <td>{row.sanction}</td>
-                      <td>{row.until}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
-      </main>
-
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-slate-950/90 px-3 py-2 backdrop-blur-xl md:hidden">
-        <div className="mx-auto grid max-w-5xl grid-cols-7 gap-1">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const active = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex flex-col items-center gap-1 rounded-lg px-1 py-1 text-[11px] transition ${
-                  active ? 'accent-bg-soft accent-text' : 'text-slate-400 hover:bg-white/[0.06]'
-                }`}
-              >
-                <Icon size={16} />
-                {tab.label}
-              </button>
-            );
-          })}
+      {isLoading && (
+        <div className="loading-toast">
+          <div className="h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin" />
+          Actualizando…
         </div>
-      </nav>
-
-      {isLoading ? (
-        <div className="fixed right-3 top-3 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-200">
-          Actualizando datos...
-        </div>
-      ) : null}
+      )}
     </div>
   );
 }
