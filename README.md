@@ -89,4 +89,27 @@ Cuando actualices resultados, reemplazás `resultados.xlsx` en el servidor y la 
 - `src/lib/excelParser.js`: parseo y normalización Excel → JSON
 - `src/App.jsx`: UI + tabs + filtros + auto-refresh
 - `docker-compose.yml`: entorno de desarrollo en contenedor
-# torneo-utn
+
+## 🌐 Deploy en GitHub Pages
+
+Ya está incluido el workflow en [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml).
+
+### 1) Configurar Pages
+
+- En GitHub: `Settings` → `Pages`
+- `Source`: **GitHub Actions**
+
+### 2) Configurar variables del repositorio
+
+En `Settings` → `Secrets and variables` → `Actions` → `Variables`, crear:
+
+- `VITE_RESULTS_EXCEL_URL`
+- `VITE_FIXTURE_EXCEL_URL`
+- `VITE_AUTO_REFRESH_MS` (opcional, default `120000`)
+- `VITE_ENABLE_MANUAL_UPLOAD` (opcional, default `false`)
+
+### 3) Hacer push
+
+Cada push a `main` o `master` dispara build y deploy automático.
+
+> Nota: para GitHub Pages de proyecto se usa base `/${repo}/` automáticamente con `VITE_BASE_PATH`.
