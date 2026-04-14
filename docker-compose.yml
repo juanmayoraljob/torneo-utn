@@ -1,0 +1,19 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: torneo-app
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_RESULTS_EXCEL_URL=${VITE_RESULTS_EXCEL_URL:-}
+      - VITE_FIXTURE_EXCEL_URL=${VITE_FIXTURE_EXCEL_URL:-}
+      - VITE_AUTO_REFRESH_MS=${VITE_AUTO_REFRESH_MS:-120000}
+      - VITE_ENABLE_MANUAL_UPLOAD=${VITE_ENABLE_MANUAL_UPLOAD:-false}
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - .:/app
+      - /app/node_modules
+    stdin_open: true
+    tty: true

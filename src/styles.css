@@ -1,0 +1,134 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  color-scheme: dark;
+  --accent: 56 189 248;
+}
+
+.theme-A {
+  --accent: 56 189 248;
+}
+
+.theme-B {
+  --accent: 251 191 36;
+}
+
+.theme-C {
+  --accent: 52 211 153;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  @apply bg-slate-950 text-slate-100 antialiased;
+  background-image:
+    radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.15), transparent 35%),
+    radial-gradient(circle at 90% 0%, rgba(34, 197, 94, 0.12), transparent 30%),
+    linear-gradient(180deg, #020617 0%, #020617 45%, #0b1220 100%);
+}
+
+.card {
+  @apply rounded-3xl border border-white/10 bg-slate-900/55 p-4 shadow-soft backdrop-blur-xl;
+}
+
+.table-scroll {
+  @apply w-full overflow-x-auto rounded-2xl border border-white/5;
+}
+
+.table-base {
+  @apply min-w-full text-sm;
+}
+
+.table-base thead tr {
+  @apply border-b border-white/10 text-slate-300;
+}
+
+.table-base th,
+.table-base td {
+  @apply px-3 py-2 text-left whitespace-nowrap;
+}
+
+.table-base tbody tr {
+  @apply transition-colors duration-200;
+}
+
+.table-base tbody tr:hover {
+  @apply bg-white/[0.03];
+}
+
+.badge {
+  @apply rounded-full border border-white/15 bg-white/5 px-2 py-1 text-xs text-slate-300;
+}
+
+.fade-in {
+  animation: fadeIn 220ms ease-out;
+}
+
+.btn-soft {
+  @apply rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm font-medium text-slate-100 transition duration-200 hover:border-cyan-400/60 hover:bg-cyan-400/10;
+}
+
+.chip-active {
+  border-color: rgb(var(--accent) / 0.55);
+  background-color: rgb(var(--accent) / 0.16);
+  color: rgb(var(--accent));
+}
+
+.btn-soft:hover {
+  border-color: rgb(var(--accent) / 0.55);
+  background-color: rgb(var(--accent) / 0.12);
+  color: rgb(var(--accent));
+}
+
+.accent-text {
+  color: rgb(var(--accent));
+}
+
+.accent-bg-soft {
+  background-color: rgb(var(--accent) / 0.14);
+}
+
+.accent-border {
+  border-color: rgb(var(--accent) / 0.45);
+}
+
+.match-card {
+  @apply rounded-2xl border border-white/10 bg-slate-950/60 p-3 transition;
+}
+
+.match-card:hover {
+  border-color: rgb(var(--accent) / 0.45);
+}
+
+.tab-enter {
+  animation: tabIn 260ms ease-out;
+}
+
+@keyframes tabIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
